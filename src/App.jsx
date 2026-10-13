@@ -9,17 +9,43 @@ function App() {
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // NEW: State for the active tab and favorite users
+  const [activeTab, setActiveTab] = useState('all');
+  const [favoriteIds, setFavoriteIds] = useState([]);
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
     setSelectedUserId(null); 
   };
 
-  const getFilteredUsers = () => {
-    if (!searchQuery) return usersData;
-    return usersData.filter(user => 
-      user.name.toLowerCase().includes(searchQuery.toLowerCase())
+  // NEW: Function to toggle favorites
+  const toggleFavorite = (id) => {
+    setFavoriteIds(prev => 
+      prev.includes(id) ? prev.filter(favId => favId !== id) : [...prev, id]
     );
+  };
+
+  // UPDATED: Filter logic now considers both the search query AND the active tab
+  const getFilteredUsers = () => {
+    let filtered = usersData;
+
+    // 1. Filter by Tab
+    if (activeTab === 'favorites') {
+      filtered = filtered.filter(user => favoriteIds.includes(user.id));
+    } else if (activeTab === 'recent') {
+      // For demo purposes, "Recent" just shows the last 4 users
+      filtered = filtered.slice(-4); 
+    }
+
+    // 2. Filter by Search Query
+    if (searchQuery) {
+      filtered = filtered.filter(user => 
+        user.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    return filtered;
   };
 
   const handleViewUser = (id) => {
@@ -42,7 +68,6 @@ function App() {
   return (
     <div className={`app-container ${isDarkMode ? 'dark-mode' : 'light-mode'}`}>
       
-      {/* New Header UI */}
       <header className="app-header">
         <div className="header-content">
           <div className="logo-area">
@@ -67,7 +92,6 @@ function App() {
         ) : (
           <div className="dashboard-layout">
             
-            {/* New Sidebar UI */}
             <aside className="sidebar">
               <h2 className="sidebar-title">Directory</h2>
               <p className="sidebar-subtitle">Find your team members easily.</p>
@@ -82,17 +106,43 @@ function App() {
                   className="search-input"
                 />
               </div>
+
+              {/* NEW: Tab Navigation Bar */}
+              <div className="tab-nav">
+                <button 
+                  className={`tab-btn ${activeTab === 'all' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('all')}
+                >
+                  👥 All Members
+                </button>
+                <button 
+                  className={`tab-btn ${activeTab === 'favorites' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('favorites')}
+                >
+                  ⭐ Favorites
+                </button>
+                <button 
+                  className={`tab-btn ${activeTab === 'recent' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('recent')}
+                >
+                  🕒 Recent
+                </button>
+              </div>
               
               <div className="stats-box">
-                <p>Total Members</p>
+                <p>Showing</p>
                 <h3>{getFilteredUsers().length}</h3>
+                <p>profiles</p>
               </div>
             </aside>
 
-            {/* Main Content Area */}
             <section className="content-area">
               <div className="content-header">
-                <h2>Team Members</h2>
+                <h2>
+                  {activeTab === 'all' && 'All Team Members'}
+                  {activeTab === 'favorites' && 'Favorite Members'}
+                  {activeTab === 'recent' && 'Recently Added'}
+                </h2>
                 <span className="badge">{getFilteredUsers().length} profiles</span>
               </div>
               
@@ -102,12 +152,15 @@ function App() {
                     <ProfileCard 
                       key={user.id} 
                       user={user} 
-                      onViewProfile={() => handleViewUser(user.id)} 
+                      onViewProfile={() => handleViewUser(user.id)}
+                      // NEW: Pass favorite props to the card
+                      isFavorite={favoriteIds.includes(user.id)}
+                      onToggleFavorite={toggleFavorite}
                     />
                   ))
                 ) : (
                   <div className="no-results">
-                    <p>No users found matching "{searchQuery}"</p>
+                    <p>No users found in this section.</p>
                   </div>
                 )}
               </div>

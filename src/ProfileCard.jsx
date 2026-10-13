@@ -1,7 +1,6 @@
 import React from 'react';
 
-function ProfileCard({ user, onViewProfile }) {
-  // Generate a consistent color based on the user's name
+function ProfileCard({ user, onViewProfile, isFavorite, onToggleFavorite }) {
   const colors = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#ef4444'];
   const colorIndex = user.name.length % colors.length;
   const avatarColor = colors[colorIndex];
@@ -16,6 +15,14 @@ function ProfileCard({ user, onViewProfile }) {
           <h3>{user.name}</h3>
           <p className="email">{user.email}</p>
         </div>
+        {/* NEW: Favorite Button */}
+        <button 
+          className={`btn-fav ${isFavorite ? 'active' : ''}`} 
+          onClick={() => onToggleFavorite(user.id)}
+          title="Add to Favorites"
+        >
+          {isFavorite ? '★' : '☆'}
+        </button>
       </div>
       
       <div className="card-details">
